@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>音声認識と文字起こし</h2>
+
+<button id="start">開始</button>
+<button id="stop">停止</button>
+<button id="download">ダウンロード</button>
+<button id="copy">コピー</button>
+<textarea id="result" rows="30" cols="50"></textarea>
+
+<script>
+window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+let recognition = new window.SpeechRecognition();
+recognition.lang = 'ja-JP';
+recognition.interimResults = true;
+recognition.continuous = true;
+
+let finalTranscript = ''; 
+let lastResultTime = Date.now();
+
+recognition.onresult = (event) => {
+  let interimTranscript = '';
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const transcript = event.results[i][0].transcript;
+    if (event.results[i].isFinal) {
+      if (Date.now() - lastResultTime > 800) {
+          finalTranscript = finalTranscript.trim() + '\n';
+      }
+      finalTranscript += transcript + ' ';
+      lastResultTime = Date.now();
+    } else {
+      interimTranscript = transcript;
+    }
+  }
+  document.getElementById('result').value = finalTranscript.trim() + ' ' + interimTranscript.trim();
+  document.getElementById('result').scrollTop = document.getElementById('result').scrollHeight;
+}
+
+document.getElementById('start').addEventListener('click', () => {
+  recognition.start();
+});
+
+document.getElementById('stop').addEventListener('click', () => {
+  recognition.stop();
+});
+
+document.getElementById('download').addEventListener('click', () => {
+  let downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(new Blob([document.getElementById('result').value], {type: 'text/plain'}));
+  downloadLink.download = 'transcript.txt';
+  downloadLink.click();
+});
+
+document.getElementById('copy').addEventListener('click', () => {
+  const textarea = document.getElementById('result');
+  textarea.select();
+  document.execCommand('copy');
+});
+</script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+}
+
+button {
+  margin: 1em 0;
+}
+
+textarea {
+  width: 100%;
+  height: 80vh;
+  margin-bottom: 1em;
+  font-size: 12px;
+}
+
+@media screen and (max-width: 1000px) {
+  textarea {
+    font-size: 24px;
+  }
+}
+</style>
+
+</body>
+</html>
